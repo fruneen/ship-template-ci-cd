@@ -17,7 +17,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.PRIVATE_KEY }}
           owner: fruneen
-          repositories: "fruneen/ship-template,fruneen/ship-template-ci-cd"
+          repositories: "ship-template,ship-template-ci-cd"
 
       - name: Checkout Template Repo
         uses: actions/checkout@v4
