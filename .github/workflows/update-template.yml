@@ -6,8 +6,6 @@ on:
 env:
   OWNER: fruneen
   TEMPLATE_REPO: ship-template
-  REPO: ship-template-ci-cd
-  WORKFLOW_FILE_NAME: update-template.yml
 
 jobs:
   update-template:
@@ -20,12 +18,12 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.PRIVATE_KEY }}
-          repositories: $TEMPLATE_REPO
+          repositories: ${{ env.TEMPLATE_REPO }}
 
       - name: Checkout Template Repo
         uses: actions/checkout@v4
         with:
-          repository: $OWNER/$TEMPLATE_REPO
+          repository: ${{ env.OWNER }}/${{ env.TEMPLATE_REPO }}
           ref: main
           token: ${{ steps.generate-token.outputs.token }}
 
