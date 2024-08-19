@@ -1,0 +1,63 @@
+name: Sync with paralect/ship repository
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  update-template:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate a GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Checkout Template Repo
+        uses: actions/checkout@v4
+        with:
+          repository: fruneen/ship-template
+          ref: main
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Run Create Ship App Command
+        run: |
+          npx create-ship-app@latest temp-project --deployment do-apps
+          
+          # Copy all generated files, including hidden files, to the root of the repo
+          shopt -s dotglob  # Include hidden files in globbing
+          cp -r temp-project/* .
+          
+          rm -rf temp-project
+
+      - name: Check for Changes
+        id: git_diff
+        run: |
+          git add .
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit"
+            echo "no_changes=true" >> $GITHUB_ENV
+          else
+            echo "Changes detected"
+            echo "no_changes=false" >> $GITHUB_ENV
+          fi
+
+      - name: Commit Changes
+        if: env.no_changes == 'false'
+        run: |
+          git config user.name "ship-github-bot"
+          git config user.email "ship-bot@paralect.com"
+          git commit -m "Update template with latest output from create-ship-app"
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+
+      - name: Push Changes
+        if: env.no_changes == 'false'
+        run: |
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
